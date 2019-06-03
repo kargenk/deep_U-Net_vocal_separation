@@ -7,4 +7,4 @@ FFT_SIZE = 1024
 BATCH_SIZE = 64
 PATCH_LENGTH = 128
 
-PATH_FFT = '/spectrogram'
+PATH_FFT = './spectrogram'
