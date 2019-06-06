@@ -76,8 +76,13 @@ def load_dataset(target='vocal'):
 # 音源を読み込んで，スペクトログラムと位相情報を返す関数
 def load_audio(file_name):
     y, sr = load(file_name, sr=C.SAMPLING_RATE)
-    spectrum = stft(y, n_fft=C.FFT_SIZE, hop_length=C.H, win_length=C.FFT_SIZE)
+    spectrum = stft(y, n_fft=C.FFT_SIZE, hop_length=C.HOP_LENGTH, win_length=C.FFT_SIZE)
     magnitude = np.abs(spectrum)
     magnitude /= np.max(magnitude)
     phase = np.exp(1.j*np.angle(spectrum))
     return magnitude, phase
+
+# スペクトログラムと位相情報から音源を復元して保存する(wav形式)関数
+def save_audio(file_name, magnitude, phase):
+    y = istft(mag*phase, hop_length=C.HOP_LENGTH, win_length=C.FFT_SIZE)
+    write_wav(file_name, y, C.SAMPLING_RATE, norm=True)
