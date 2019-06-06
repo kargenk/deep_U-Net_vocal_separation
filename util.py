@@ -54,3 +54,21 @@ def save_spectrogram(y_mixture, y_instrumental, y_vocal, file_name, original_sr=
     np.savez(os.path.join(C.PATH_FFT, file_name + '.npz'),
              mix=mix_spec, inst=inst_spec, vocal=vocal_spec)
 #     print('Saving: ' + C.PATH_FFT + file_name + '.npz')
+
+# データセット(.npz形式)を読み込む関数
+def load_dataset(target='vocal'):
+    X_list = []
+    y_list = []
+    filelist_fft = find_files(C.PATH_FFT, ext='npz')
+    
+    for file_fft in filelist_fft:
+        data = np.load(file_fft)
+        X_list.append(data['mix'])
+        
+        if target == 'vocal':
+            assert(data['mix'].shape == data['vocal'].shape)
+            y_list.append(data['vocal'])
+        else:
+            assert(data['mix'].shape == data['inst'].shape)
+            y_list.append(data['inst'])
+    return X_list, y_list
