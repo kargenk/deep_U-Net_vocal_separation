@@ -84,5 +84,5 @@ def load_audio(file_name):
 
 # スペクトログラムと位相情報から音源を復元して保存する(wav形式)関数
 def save_audio(file_name, magnitude, phase):
-    y = istft(mag*phase, hop_length=C.HOP_LENGTH, win_length=C.FFT_SIZE)
+    y = istft(magnitude*phase, hop_length=C.HOP_LENGTH, win_length=C.FFT_SIZE)
     write_wav(file_name, y, C.SAMPLING_RATE, norm=True)
