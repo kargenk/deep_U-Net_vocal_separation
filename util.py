@@ -72,3 +72,12 @@ def load_dataset(target='vocal'):
             assert(data['mix'].shape == data['inst'].shape)
             y_list.append(data['inst'])
     return X_list, y_list
+
+# 音源を読み込んで，スペクトログラムと位相情報を返す関数
+def load_audio(file_name):
+    y, sr = load(file_name, sr=C.SAMPLING_RATE)
+    spectrum = stft(y, n_fft=C.FFT_SIZE, hop_length=C.H, win_length=C.FFT_SIZE)
+    magnitude = np.abs(spectrum)
+    magnitude /= np.max(magnitude)
+    phase = np.exp(1.j*np.angle(spectrum))
+    return magnitude, phase
