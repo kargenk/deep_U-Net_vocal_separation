@@ -35,7 +35,13 @@ def save_vocal(y_mixture, y_instrumental, file_name):
     print('Saving: ./src/audio_check/' + file_name + '.wav')
 
 # スペクトログラムを正規化して保存(npz形式)する関数
-def save_spectrogram(y_mixture, y_instrumental, file_name):
+def save_spectrogram(y_mixture, y_instrumental, y_vocal, file_name, original_sr=44100):
+    # 16kHzにダウンサンプリング
+    y_mix = resample(y_mixture, original_sr, C.SAMPLING_RATE)
+    y_inst = resample(y_instrumental, original_sr, C.SAMPLING_RATE)
+    y_vocal = resample(y_vocal, original_sr, C.SAMPLING_RATE)
+    
+    # 各スペクトログラムを生成
     mix_spec, inst_spec, vocal_spec = make_spectrograms(y_mixture, y_instrumental)
     
     # 各スペクトログラムを正規化
@@ -46,5 +52,5 @@ def save_spectrogram(y_mixture, y_instrumental, file_name):
     
     # 保存
     np.savez(os.path.join(C.PATH_FFT, file_name + '.npz'),
-             vocal=vocal_spec, mix=mix_spec, inst=inst_spec)
-    print('Saving: ' + C.PATH_FFT + file_name + '.npz')
+             mix=mix_spec, inst=inst_spec, vocal=vocal_spec)
+#     print('Saving: ' + C.PATH_FFT + file_name + '.npz')
