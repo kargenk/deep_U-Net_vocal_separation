@@ -21,7 +21,7 @@ def make_spectrograms(y_mixture, y_instrumental):
     return mix_spec, inst_spec, vocal_spec
 
 # 生成したボーカル音源を保存(wav形式)する関数
-def save_vocal(y_mixture, y_instrumental, file_name):
+def save_vocal(y_mixture, y_instrumental, file_name, opt='vocal'):
     mix_spec, inst_spec, vocal_spec = make_spectrograms(y_mixture, y_instrumental)
     
     phase = np.exp(1.j*np.angle(vocal_spec))  # 位相情報
@@ -31,24 +31,36 @@ def save_vocal(y_mixture, y_instrumental, file_name):
                     hop_length=C.HOP_LENGTH, win_length=C.FFT_SIZE)
     
     # ファイル名を'曲名_vocal.wav'にして保存
-    write_wav('./src/audio_check/' + file_name + '_vocal' + '.wav', y_vocal, C.SAMPLING_RATE)
-    print('Saving: ./src/audio_check/' + file_name + '.wav')
+    write_wav(C.PATH_AUDIO + file_name + '_' + opt + '.wav', y_vocal, C.SAMPLING_RATE)
+    print('Saving: ' + PATH_AUDIO + file_name + '_' + opt + '.wav')
 
 # スペクトログラムを正規化して保存(npz形式)する関数
 def save_spectrogram(y_mixture, y_instrumental, y_vocal, file_name, original_sr=44100):
     # 16kHzにダウンサンプリング
     y_mix = resample(y_mixture, original_sr, C.SAMPLING_RATE)
     y_inst = resample(y_instrumental, original_sr, C.SAMPLING_RATE)
-    y_vocal = resample(y_vocal, original_sr, C.SAMPLING_RATE)
+#     y_vocal = resample(y_vocal, original_sr, C.SAMPLING_RATE)
     
     # 各スペクトログラムを生成
-    mix_spec, inst_spec, vocal_spec = make_spectrograms(y_mixture, y_instrumental)
+    mix_spec = np.abs(
+                    stft(y_mixture, n_fft=C.FFT_SIZE, hop_length=C.HOP_LENGTH))\
+                .astype(np.float32)
+    inst_spec = np.abs(
+                    stft(y_instrumental, n_fft=C.FFT_SIZE, hop_length=C.HOP_LENGTH))\
+                .astype(np.float32)
+    vocal_spec = np.abs(
+                    stft(y_vocal, n_fft=C.FFT_SIZE, hop_length=C.HOP_LENGTH))\
+                .astype(np.float32)
     
     # 各スペクトログラムを正規化
     norm = mix_spec.max()
     mix_spec /= norm
     inst_spec /= norm
     vocal_spec /= norm
+    
+    print(mix_spec.shape)
+    print(vocal_spec.shape)
+    print(inst_spec.shape)
     
     # 保存
     np.savez(os.path.join(C.PATH_FFT, file_name + '.npz'),
