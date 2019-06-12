@@ -3,6 +3,7 @@ from librosa.output import write_wav
 from librosa.util import find_files
 import numpy as np
 import const as C
+import network
 import os
 
 # スペクトログラムを生成する関数
@@ -98,3 +99,16 @@ def load_audio(file_name):
 def save_audio(file_name, magnitude, phase):
     y = istft(magnitude*phase, hop_length=C.HOP_LENGTH, win_length=C.FFT_SIZE)
     write_wav(file_name, y, C.SAMPLING_RATE, norm=True)
+
+# マスクを計算する関数
+def compute_mask(input_magnitude, unet_model="model.", hard=True):
+    unet = network.UNet()
+    unet.load(unet_model)
+    mask = unet(input_magnitude[np.newaxis, np.newaxis, 1:, :]).data[0, 0, :, :]
+    mask = np.vstack((np.zeros(mask.shape[1], dtype="float32"), mask))
+    if hard:
+        hard_mask = np.zeros(mask.shape, dtype="float32")
+        hard_mask[mask > 0.5] = 1
+        return hard_mask
+    else:
+        return mask
