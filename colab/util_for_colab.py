@@ -121,3 +121,17 @@ def magnitude_phase(spectrograms):
 		magnitude_list.append(magnitude)
 		phase_list.append(phase)
 	return magnitude_list, phase_list
+
+# 学習時にランダムにサンプルを取る関数
+def sampling(X_magnitude, y_magnitude):
+	X = []
+	y = []
+	for mixture, target in zip(X_magnitude, y_magnitude):
+		starts = np.random.randint(0, mixture.shape[1] - C.PATCH_LENGTH,
+									 (mixture.shape[1] - C.PATCH_LENGTH) // C.SAMPLING_STRIDE)
+		for start in starts:
+			end = start + C.PATCH_LENGTH
+			X.append(mixture[1:, start:end, np.newaxis])
+			y.append(target[1:, start:end, np.newaxis])
+	return np.asarray(X, dtype=np.float32), np.asarray(y, dtype=np.float32)
+	
