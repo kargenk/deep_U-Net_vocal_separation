@@ -1,4 +1,4 @@
-from librosa.core import load, resample, stft, istft
+from librosa.core import load, resample, stft, istft, magphase
 from librosa.output import write_wav
 from librosa.util import find_files
 import numpy as np
@@ -40,7 +40,7 @@ def save_spectrogram(y_mixture, y_instrumental, y_vocal, file_name, original_sr=
     # 16kHzにダウンサンプリング
     y_mix = resample(y_mixture, original_sr, C.SAMPLING_RATE)
     y_inst = resample(y_instrumental, original_sr, C.SAMPLING_RATE)
-#     y_vocal = resample(y_vocal, original_sr, C.SAMPLING_RATE)
+    y_vocal = resample(y_vocal, original_sr, C.SAMPLING_RATE)
     
     # 各スペクトログラムを生成
     mix_spec = np.abs(
@@ -66,7 +66,7 @@ def save_spectrogram(y_mixture, y_instrumental, y_vocal, file_name, original_sr=
     # 保存
     np.savez(os.path.join(C.PATH_FFT, file_name + '.npz'),
              mix=mix_spec, inst=inst_spec, vocal=vocal_spec)
-#     print('Saving: ' + C.PATH_FFT + file_name + '.npz')
+    print('Saving: ' + C.PATH_FFT + file_name + '.npz')
 
 # データセット(.npz形式)を読み込む関数
 def load_dataset(path, target='vocal'):
@@ -90,20 +90,19 @@ def load_dataset(path, target='vocal'):
 def load_audio(file_name):
     y, sr = load(file_name, sr=C.SAMPLING_RATE)
     spectrum = stft(y, n_fft=C.FFT_SIZE, hop_length=C.HOP_LENGTH, win_length=C.FFT_SIZE)
-    magnitude = np.abs(spectrum)
-    magnitude /= np.max(magnitude)
-    phase = np.exp(1.j*np.angle(spectrum))
-    return magnitude, phase
+    magnitude, phase = magphase(spectrum)
+    return magnitude.astype(np.float32), phase
 
 # スペクトログラムと位相情報から音源を復元して保存する(wav形式)関数
 def save_audio(file_name, magnitude, phase):
     y = istft(magnitude*phase, hop_length=C.HOP_LENGTH, win_length=C.FFT_SIZE)
     write_wav(file_name, y, C.SAMPLING_RATE, norm=True)
+    print('audio saved:' + file_name)
 
 # マスクを計算する関数
-def compute_mask(input_magnitude, unet_model="", hard=True):
+def compute_mask(input_magnitude, epoch, path='', hard=True):
     unet = network.UNet()
-    unet.load(unet_model)
+    unet.load(epoch=epoch, path=path)
     mask = unet(input_magnitude[np.newaxis, np.newaxis, 1:, :]).data[0, 0, :, :]
     mask = np.vstack((np.zeros(mask.shape[1], dtype="float32"), mask))
     if hard:
@@ -112,3 +111,13 @@ def compute_mask(input_magnitude, unet_model="", hard=True):
         return hard_mask
     else:
         return mask
+
+# スペクトル情報と位相情報のリストを返す関数
+def magnitude_phase(spectrograms):
+	magnitude_list = []
+	phase_list = []
+	for i in spectrograms:
+		magnitude, phase = magphase(i)
+		magnitude_list.append(magnitude)
+		phase_list.append(phase)
+	return magnitude_list, phase_list
