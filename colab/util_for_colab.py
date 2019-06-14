@@ -3,7 +3,7 @@ from librosa.output import write_wav
 from librosa.util import find_files
 import numpy as np
 import const_for_colab as C
-import network_for_colab as network
+# import network_for_colab as network
 import os
 
 # スペクトログラムを生成する関数
@@ -40,7 +40,7 @@ def save_spectrogram(y_mixture, y_instrumental, y_vocal, file_name, original_sr=
     # 16kHzにダウンサンプリング
     y_mix = resample(y_mixture, original_sr, C.SAMPLING_RATE)
     y_inst = resample(y_instrumental, original_sr, C.SAMPLING_RATE)
-    y_vocal = resample(y_vocal, original_sr, C.SAMPLING_RATE)
+    # y_vocal = resample(y_vocal, original_sr, C.SAMPLING_RATE)
     
     # 各スペクトログラムを生成
     mix_spec = np.abs(
@@ -99,18 +99,18 @@ def save_audio(file_name, magnitude, phase):
     write_wav(file_name, y, C.SAMPLING_RATE, norm=True)
     print('audio saved:' + file_name)
 
-# マスクを計算する関数
-def compute_mask(input_magnitude, epoch, path='', hard=True):
-    unet = network.UNet()
-    unet.load(epoch=epoch, path=path)
-    mask = unet(input_magnitude[np.newaxis, np.newaxis, 1:, :]).data[0, 0, :, :]
-    mask = np.vstack((np.zeros(mask.shape[1], dtype="float32"), mask))
-    if hard:
-        hard_mask = np.zeros(mask.shape, dtype="float32")
-        hard_mask[mask > 0.5] = 1
-        return hard_mask
-    else:
-        return mask
+# # マスクを計算する関数
+# def compute_mask(input_magnitude, epoch, path='', hard=True):
+#     unet = network.UNet()
+#     unet.load(epoch=epoch, path=path)
+#     mask = unet(input_magnitude[np.newaxis, np.newaxis, 1:, :]).data[0, 0, :, :]
+#     mask = np.vstack((np.zeros(mask.shape[1], dtype="float32"), mask))
+#     if hard:
+#         hard_mask = np.zeros(mask.shape, dtype="float32")
+#         hard_mask[mask > 0.5] = 1
+#         return hard_mask
+#     else:
+#         return mask
 
 # スペクトル情報と位相情報のリストを返す関数
 def magnitude_phase(spectrograms):
