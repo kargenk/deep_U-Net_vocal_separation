@@ -105,6 +105,8 @@ def save_audio(file_name, magnitude, phase):
 def compute_mask(input_magnitude, unet_model="unet.model", hard=True):
     unet = network.UNet()
     unet.load(unet_model)
+    config.train = False
+    config.enable_backprop = False
     mask = unet(input_magnitude[np.newaxis, np.newaxis, 1:, :]).data[0, 0, :, :]
     mask = np.vstack((np.zeros(mask.shape[1], dtype="float32"), mask))
     if hard:
