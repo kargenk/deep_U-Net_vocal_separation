@@ -6,34 +6,34 @@ import const as C
 import network
 import os
 
-# スペクトログラムを生成する関数
-def make_spectrograms(y_mixture, y_instrumental):
-    # 短時間フーリエ変換(STFT)による各スペクトログラムの生成
-    mix_spec = np.abs(
-                    stft(y_mixture, n_fft=C.FFT_SIZE, hop_length=C.HOP_LENGTH))\
-                .astype(np.float32)
-    inst_spec = np.abs(
-                    stft(y_instrumental, n_fft=C.FFT_SIZE, hop_length=C.HOP_LENGTH))\
-                .astype(np.float32)
+# # スペクトログラムを生成する関数
+# def make_spectrograms(y_mixture, y_instrumental):
+#     # 短時間フーリエ変換(STFT)による各スペクトログラムの生成
+#     mix_spec = np.abs(
+#                     stft(y_mixture, n_fft=C.FFT_SIZE, hop_length=C.HOP_LENGTH))\
+#                 .astype(np.float32)
+#     inst_spec = np.abs(
+#                     stft(y_instrumental, n_fft=C.FFT_SIZE, hop_length=C.HOP_LENGTH))\
+#                 .astype(np.float32)
         
-    # ボーカル部分は原曲とインストのスペクトログラムの減算によって生成
-    vocal_spec = np.maximum(0, mix_spec - inst_spec)
+#     # ボーカル部分は原曲とインストのスペクトログラムの減算によって生成
+#     vocal_spec = np.maximum(0, mix_spec - inst_spec)
     
-    return mix_spec, inst_spec, vocal_spec
+#     return mix_spec, inst_spec, vocal_spec
 
-# 生成したボーカル音源を保存(wav形式)する関数
-def save_vocal(y_mixture, y_instrumental, file_name, opt='vocal'):
-    mix_spec, inst_spec, vocal_spec = make_spectrograms(y_mixture, y_instrumental)
+# # 生成したボーカル音源を保存(wav形式)する関数
+# def save_vocal(y_mixture, y_instrumental, file_name, opt='vocal'):
+#     mix_spec, inst_spec, vocal_spec = make_spectrograms(y_mixture, y_instrumental)
     
-    phase = np.exp(1.j*np.angle(vocal_spec))  # 位相情報
+#     phase = np.exp(1.j*np.angle(vocal_spec))  # 位相情報
     
-    # 逆短時間フーリエ変換により，位相情報を含むスペクトログラムから音声信号を復元
-    y_vocal = istft(vocal_spec*phase,
-                    hop_length=C.HOP_LENGTH, win_length=C.FFT_SIZE)
+#     # 逆短時間フーリエ変換により，位相情報を含むスペクトログラムから音声信号を復元
+#     y_vocal = istft(vocal_spec*phase,
+#                     hop_length=C.HOP_LENGTH, win_length=C.FFT_SIZE)
     
-    # ファイル名を'曲名_vocal.wav'にして保存
-    write_wav(C.PATH_AUDIO + file_name + '_' + opt + '.wav', y_vocal, C.SAMPLING_RATE)
-    print('Saving: ' + PATH_AUDIO + file_name + '_' + opt + '.wav')
+#     # ファイル名を'曲名_vocal.wav'にして保存
+#     write_wav(C.PATH_AUDIO + file_name + '_' + opt + '.wav', y_vocal, C.SAMPLING_RATE)
+#     print('Saving: ' + PATH_AUDIO + file_name + '_' + opt + '.wav')
 
 # スペクトログラムを正規化して保存(npz形式)する関数
 def save_spectrogram(y_mixture, y_instrumental, y_vocal, file_name, original_sr=44100):
@@ -65,16 +65,17 @@ def save_spectrogram(y_mixture, y_instrumental, y_vocal, file_name, original_sr=
     
     # 保存
     np.savez(os.path.join(C.PATH_FFT, file_name + '.npz'),
-             mix=mix_spec, inst=inst_spec, vocal=vocal_spec)
+             mix=mix_spec, vocal=vocal_spec, inst=inst_spec)
 #     print('Saving: ' + C.PATH_FFT + file_name + '.npz')
 
 # データセット(.npz形式)を読み込む関数
 def load_dataset(target='vocal'):
+#     file_list_fft = find_files(C.PATH_FFT, ext='npz')[:200]
     X_list = []
     y_list = []
-    filelist_fft = find_files(C.PATH_FFT, ext='npz')
+    file_list_fft = find_files(C.PATH_FFT, ext='npz')
     
-    for file_fft in filelist_fft:
+    for file_fft in file_list_fft:
         data = np.load(file_fft)
         X_list.append(data['mix'])
         
@@ -101,7 +102,7 @@ def save_audio(file_name, magnitude, phase):
     write_wav(file_name, y, C.SAMPLING_RATE, norm=True)
 
 # マスクを計算する関数
-def compute_mask(input_magnitude, unet_model="model.", hard=True):
+def compute_mask(input_magnitude, unet_model="unet.model", hard=True):
     unet = network.UNet()
     unet.load(unet_model)
     mask = unet(input_magnitude[np.newaxis, np.newaxis, 1:, :]).data[0, 0, :, :]
