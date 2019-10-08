@@ -9,5 +9,5 @@ IMAGE_WIDTH = 128                  # 入力画像の横サイズ
 BATCH_SIZE = 64
 PATCH_LENGTH = 128
 
-PATH_FFT = 'E:/Datasets/sound/MedleyDB/spectrograms'        # spectrogramを保存するディレクトリ
+PATH_FFT = 'drive/My Drive/mnt/src/DSD100/spectrograms'        # spectrogramを保存するディレクトリ
 PATH_AUDIO = './src/audio_check/'  # データセットを保存するディレクトリ
