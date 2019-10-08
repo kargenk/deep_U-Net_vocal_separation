@@ -1,6 +1,7 @@
 from librosa.core import load, resample, stft, istft
 from librosa.output import write_wav
 from librosa.util import find_files
+from chainer import config
 import numpy as np
 import const as C
 import network
