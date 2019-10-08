@@ -25,29 +25,29 @@ class UNet(Chain):
         super().__init__()
         
         with self.init_scope():
-            self.conv1 = L.Convolution2D(1, 16, 4, 2, 2)
+            self.conv1 = L.Convolution2D(1, 16, 4, 2, 1)
             self.norm1 = L.BatchNormalization(16)
-            self.conv2 = L.Convolution2D(16, 32, 4, 2, 2)
+            self.conv2 = L.Convolution2D(16, 32, 4, 2, 1)
             self.norm2 = L.BatchNormalization(32)
-            self.conv3 = L.Convolution2D(32, 64, 4, 2, 2)
+            self.conv3 = L.Convolution2D(32, 64, 4, 2, 1)
             self.norm3 = L.BatchNormalization(64)
-            self.conv4 = L.Convolution2D(64, 128, 4, 2, 2)
+            self.conv4 = L.Convolution2D(64, 128, 4, 2, 1)
             self.norm4 = L.BatchNormalization(128)
-            self.conv5 = L.Convolution2D(128, 256, 4, 2, 2)
+            self.conv5 = L.Convolution2D(128, 256, 4, 2, 1)
             self.norm5 = L.BatchNormalization(256)
-            self.conv6 = L.Convolution2D(256, 512, 4, 2, 2)
+            self.conv6 = L.Convolution2D(256, 512, 4, 2, 1)
             self.norm6 = L.BatchNormalization(512)
-            self.deconv1 = L.Deconvolution2D(512, 256, 4, 2, 2)
+            self.deconv1 = L.Deconvolution2D(512, 256, 4, 2, 1)
             self.denorm1 = L.BatchNormalization(256)
-            self.deconv2 = L.Deconvolution2D(512, 128, 4, 2, 2)
+            self.deconv2 = L.Deconvolution2D(512, 128, 4, 2, 1)
             self.denorm2 = L.BatchNormalization(128)
-            self.deconv3 = L.Deconvolution2D(256, 64, 4, 2, 2)
+            self.deconv3 = L.Deconvolution2D(256, 64, 4, 2, 1)
             self.denorm3 = L.BatchNormalization(64)
-            self.deconv4 = L.Deconvolution2D(128, 32, 4, 2, 2)
+            self.deconv4 = L.Deconvolution2D(128, 32, 4, 2, 1)
             self.denorm4 = L.BatchNormalization(32)
-            self.deconv5 = L.Deconvolution2D(64, 16, 4, 2, 2)
+            self.deconv5 = L.Deconvolution2D(64, 16, 4, 2, 1)
             self.denorm5 = L.BatchNormalization(16)
-            self.deconv6 = L.Deconvolution2D(32, 1, 4, 2, 2)
+            self.deconv6 = L.Deconvolution2D(32, 1, 4, 2, 1)
     
     def __call__(self, X):
         h1 = F.leaky_relu(self.norm1(self.conv1(X)))
@@ -82,7 +82,7 @@ class Trainer_UNet(Chain):
     
     def __call__(self, X, y):
         O = self.unet(X)  # UNetを通した後のマスク
-        self.loss = F.mean_absolute_error(X * O, Y)
+        self.loss = F.mean_absolute_error(X * O, y)
         return self.loss
 
 def train(X_list, y_list, epoch=40, save_file='unet.model'):
@@ -91,7 +91,7 @@ def train(X_list, y_list, epoch=40, save_file='unet.model'):
     # モデルのインスタンス化
     unet = UNet()
     model = Trainer_UNet(unet)
-    optimizer = optimizers.Adam().set(model)  # オプティマイザのセッティング
+    optimizer = optimizers.Adam().setup(model)  # オプティマイザのセッティング
     
     # 各種セッティングの有効化
     model.to_gpu(0)
@@ -113,13 +113,13 @@ def train(X_list, y_list, epoch=40, save_file='unet.model'):
             
             for i in range(C.BATCH_SIZE):
                 rand_index = np.random.randint(
-                    music_length[music_index[i] - C.PATCH_LENGTH - 1])
+                    music_length[music_index[i]] - C.PATCH_LENGTH - 1)
                 X[i, 0, :, :] = \
-                    X_list[music_index[i]][1:, music_index:music_index + C.PATCH_LENGTH]
+                    X_list[music_index[i]][1:, rand_index:rand_index + C.PATCH_LENGTH]
                 y[i, 0, :, :] = \
-                    y_list[music_index[i]][1:, music_index:music_index + C.PATCH_LENGTH]
+                    y_list[music_index[i]][1:, rand_index:rand_index + C.PATCH_LENGTH]
             
-            opt.update(model, cp.asarray(X), cp.asarray(y))
+            optimizer.update(model, cp.asarray(X), cp.asarray(y))
             sum_loss += model.loss.data * C.BATCH_SIZE
         
         print('epoch: %d/%d  loss=%.3f' % (ep+1, epoch, sum_loss))
